@@ -1,0 +1,30 @@
+{
+  "name": "@bookedai/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/server.ts",
+    "start": "tsx src/server.ts",
+    "worker": "tsx watch --env-file=../../.env src/worker.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@bookedai/agent": "workspace:*",
+    "@bookedai/db": "workspace:*",
+    "@bookedai/integrations": "workspace:*",
+    "@fastify/cors": "^11.3.0",
+    "@fastify/formbody": "^9.0.0",
+    "bullmq": "^5.60.0",
+    "fastify": "^5.6.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.0"
+  }
+}

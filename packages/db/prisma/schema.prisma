@@ -1,0 +1,173 @@
+// BookedAI data model (Phase 1)
+// Run `pnpm db:push` to sync to Postgres in dev, `pnpm db:migrate` for real migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  TRIAL
+  MONTHLY
+  SETUP
+  CANCELLED
+}
+
+enum LeadStatus {
+  NEW
+  IN_CONVERSATION
+  QUALIFIED
+  UNQUALIFIED
+  BOOKED
+  NEEDS_HUMAN
+  CLOSED
+}
+
+enum ConversationStatus {
+  ACTIVE
+  HUMAN_TAKEOVER
+  ENDED
+}
+
+enum Channel {
+  SMS
+  WHATSAPP
+  WEB
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum BookingStatus {
+  SCHEDULED
+  REMINDED
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+  RESCHEDULED
+}
+
+/// A Hustle Buddies customer: a coach / consultant whose leads the agent handles.
+model Client {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  ownerName        String
+  ownerEmail       String
+  ownerPhone       String?  // where handoff alerts go
+  timezone         String   @default("America/New_York")
+  plan             Plan     @default(TRIAL)
+  trialEndsAt      DateTime?
+  twilioNumber     String?  @unique // E.164, e.g. +15551234567 or whatsapp:+1555...
+  /// Agent configuration (offer, FAQ, qualification rubric). Validated by ClientConfigSchema in @bookedai/agent.
+  config           Json
+  /// Google OAuth tokens { access_token, refresh_token, expiry_date, calendarId }
+  googleCalendar   Json?
+  /// Optional GoHighLevel inbound webhook URL to push bookings to.
+  ghlWebhookUrl    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users         User[]
+  leads         Lead[]
+  conversations Conversation[]
+  bookings      Booking[]
+}
+
+/// Dashboard login for a client (Phase 1 uses ADMIN_TOKEN; this is here for Phase 2 auth).
+model User {
+  id        String   @id @default(cuid())
+  clientId  String
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  clientId     String
+  phone        String? // E.164
+  email        String?
+  name         String?
+  source       String     @default("web_form") // web_form | sms | whatsapp | manual
+  status       LeadStatus @default(NEW)
+  /// 0-100 produced by the scoring step
+  score        Int?
+  /// Free-form notes collected by the agent (budget, timeline, goal, ...)
+  qualification Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  bookings      Booking[]
+
+  @@unique([clientId, phone])
+  @@index([clientId, status])
+}
+
+model Conversation {
+  id        String             @id @default(cuid())
+  clientId  String
+  leadId    String
+  channel   Channel
+  status    ConversationStatus @default(ACTIVE)
+  /// Why the agent handed off (set by handoff_to_human)
+  handoffReason String?
+  summary   String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lead     Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([clientId, status])
+  @@index([leadId])
+}
+
+/// One Claude API turn. `content` stores the full content-block array verbatim so history is
+/// replayed append-only (thinking + tool_use blocks preserved).
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        Json
+  /// Plain text rendering for the dashboard (user text or the assistant's outbound SMS)
+  text           String?
+  /// Twilio message SID for inbound/outbound SMS
+  externalId     String?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  clientId        String
+  leadId          String
+  startsAt        DateTime
+  endsAt          DateTime
+  status          BookingStatus @default(SCHEDULED)
+  calendarEventId String?
+  meetingUrl      String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, startsAt])
+}
