@@ -107,14 +107,22 @@ async function saveToClient(phoneNumber: string): Promise<void> {
     return;
   }
   const { prisma } = await import("@bookedai/db");
-  const client = await prisma.client.findUnique({ where: { slug: clientSlug } });
-  if (!client) {
-    console.log(`\nNo client with slug "${clientSlug}" yet. Run:\n  DEMO_TWILIO_NUMBER=${phoneNumber} pnpm seed:demo`);
-  } else {
-    await prisma.client.update({ where: { slug: clientSlug }, data: { twilioNumber: phoneNumber } });
-    console.log(`✔ Attached ${phoneNumber} to client "${client.name}" (${clientSlug})`);
+  try {
+    const client = await prisma.client.findUnique({ where: { slug: clientSlug } });
+    if (!client) {
+      console.log(`\nNo client with slug "${clientSlug}" yet. Run:\n  DEMO_TWILIO_NUMBER=${phoneNumber} pnpm seed:demo`);
+    } else {
+      await prisma.client.update({ where: { slug: clientSlug }, data: { twilioNumber: phoneNumber } });
+      console.log(`✔ Attached ${phoneNumber} to client "${client.name}" (${clientSlug})`);
+    }
+  } catch (err) {
+    console.log(
+      `\nCould not reach DATABASE_URL from here (${err instanceof Error ? err.message.split("\n")[0] : String(err)}).\n` +
+        `If the API runs on Railway, set DEMO_TWILIO_NUMBER=${phoneNumber} there; the boot seed attaches it.`,
+    );
+  } finally {
+    await prisma.$disconnect().catch(() => undefined);
   }
-  await prisma.$disconnect();
 }
 
 const number = args.attach ? await attach(e164(args.attach)) : await buy(await pickNumber());

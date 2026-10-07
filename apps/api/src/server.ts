@@ -16,7 +16,8 @@ const svc = buildServices(env);
 if (!env.REDIS_URL) setLocalJobHandler(buildJobHandler(svc));
 
 const app = Fastify({ logger: env.NODE_ENV !== "test" });
-await app.register(cors, { origin: [env.WEB_ORIGIN], credentials: true });
+const origins = env.WEB_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
+await app.register(cors, { origin: origins, credentials: true });
 await app.register(formbody);
 
 app.get("/health", async () => ({ ok: true, model: env.AGENT_MODEL, jobs: env.REDIS_URL ? "bullmq" : "in-process" }));

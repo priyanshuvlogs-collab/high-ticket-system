@@ -38,7 +38,40 @@ Open http://localhost:3000, submit the form as a lead, chat. Open http://localho
 
 No database handy? Run the agent in the terminal: `pnpm demo:chat` (needs only `ANTHROPIC_API_KEY`).
 
-### SMS demo number (US)
+## Deploy (Railway for the API, Vercel for the web app)
+
+The demo number must reach the API 24/7, so deploy before wiring it. About 10 minutes.
+
+1. **Railway → New Project → Deploy from GitHub repo** → `priyanshuvlogs-collab/high-ticket-system`, branch `claude/ai-agent-booking-system-vonbnw`. Railway picks up `railway.json` (Dockerfile build, `/health` check).
+2. **+ New → Database → PostgreSQL** in the same project. On the API service → Variables → add `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`.
+3. API service → **Variables**, add:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-...
+   TWILIO_ACCOUNT_SID=AC...
+   TWILIO_AUTH_TOKEN=...
+   ADMIN_TOKEN=<make one up, 20+ chars>
+   DEMO_TWILIO_NUMBER=+12898192433
+   DEMO_OWNER_PHONE=+1<your cell>
+   WEB_ORIGIN=http://localhost:3000
+   NODE_ENV=production
+   ```
+4. API service → **Settings → Networking → Generate Domain**. Add variable `API_PUBLIC_URL=https://<that domain>`. Redeploy. On boot the container runs `prisma db push`, seeds the demo client with the number, then starts the API. `https://<domain>/health` should return `{"ok":true}`.
+5. **Point the number at it** (from your laptop, with Twilio keys in `.env`):
+   ```bash
+   API_PUBLIC_URL=https://<domain> pnpm twilio:setup --attach +12898192433
+   ```
+   Or paste `https://<domain>/webhooks/twilio` into Twilio Console → Phone Numbers → the number → Messaging → "A message comes in" (POST).
+6. **Text +1 289-819-2433** from your phone. Reply in under 10 seconds. If nothing: Railway → Deployments → logs show `[agent] ...` or the error.
+7. **Web app on Vercel**: Import the repo → Root Directory `apps/web` → env `NEXT_PUBLIC_API_URL=https://<railway domain>` and `NEXT_PUBLIC_DEMO_CLIENT_SLUG=demo-coach`. Then on Railway set `WEB_ORIGIN=http://localhost:3000,https://<vercel domain>` (comma-separated).
+
+Running costs: Railway hobby ~$5/mo plus Postgres usage; Claude Opus 5.5 roughly $0.05–0.15 per complete lead conversation with caching; Twilio about $0.008 per Canadian SMS segment, more for cross-border.
+
+Reminders and no-show follow-ups run on in-process timers on Railway (they reset on redeploy). Add a Railway Redis, set `REDIS_URL`, and run a second service with start command `pnpm dev:worker` when the first paying client goes live.
+
+### SMS demo number
+
+**Current demo number: +1 289-819-2433 (Ontario, Canada).** Canadian local numbers need no 10DLC or toll-free verification, so it texts immediately. Texts into US phones are cross-border and get more carrier filtering; fine for demos, get a US toll-free number for the first US client (steps below).
+
 
 ```bash
 ngrok http 4000                                   # dev only; copy the https URL into API_PUBLIC_URL in .env

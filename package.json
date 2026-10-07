@@ -22,7 +22,8 @@
     "db:migrate": "pnpm --filter @bookedai/db migrate",
     "seed:demo": "tsx scripts/seed-demo-client.ts",
     "demo:chat": "tsx scripts/demo-chat.ts",
-    "twilio:setup": "tsx scripts/twilio-setup.ts"
+    "twilio:setup": "tsx scripts/twilio-setup.ts",
+    "deploy:boot": "prisma db push --schema packages/db/prisma/schema.prisma --skip-generate && tsx scripts/seed-demo-client.ts && pnpm --filter @bookedai/api start"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -39,6 +40,7 @@
     "@bookedai/integrations": "workspace:*",
     "@types/node": "^22.0.0",
     "dotenv": "^16.4.5",
+    "prisma": "^6.19.3",
     "tsx": "^4.19.0",
     "twilio": "^5.10.0",
     "typescript": "^5.9.3",
