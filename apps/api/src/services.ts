@@ -20,11 +20,16 @@ export interface Services {
   messenger: Messenger;
   /** Resolve the calendar for a client: Google if connected, else the shared mock (demo mode). */
   calendarFor(client: Client): CalendarProvider;
+  /**
+   * Run work after the HTTP response is sent. On a long-lived server this is fire-and-forget;
+   * on Vercel it must be registered with waitUntil or the function freezes mid-Claude-call.
+   */
+  defer(work: Promise<unknown>): void;
 }
 
 const demoCalendar = new MockCalendar();
 
-export function buildServices(env: Env): Services {
+export function buildServices(env: Env, opts: { defer?: (work: Promise<unknown>) => void } = {}): Services {
   const twilioCfg =
     env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN
       ? { accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN }
@@ -35,9 +40,12 @@ export function buildServices(env: Env): Services {
   const google = googleOAuthConfigFromEnv();
   const calendars = new Map<string, CalendarProvider>();
 
+  const defer = opts.defer ?? ((work) => void work.catch((err) => console.error("[defer] background work failed", err)));
+
   return {
     env,
     messenger,
+    defer,
     calendarFor(client) {
       if (env.CALENDAR_PROVIDER === "mock") return demoCalendar;
       const creds = client.googleCalendar as GoogleCalendarCredentials | null;

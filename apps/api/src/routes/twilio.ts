@@ -33,13 +33,15 @@ export const twilioRoutes: FastifyPluginAsync<{ svc: Services }> = async (app, {
     // Respond to Twilio first, then do the work.
     reply.type("text/xml").send(EMPTY_TWIML);
     const phone = sms.from.replace(/^whatsapp:/, "");
-    handleInbound(svc, {
-      client,
-      channel: sms.channel,
-      phone,
-      text: sms.body || "(empty message)",
-      externalId: sms.messageSid,
-      source: sms.channel.toLowerCase(),
-    }).catch((err) => req.log.error(err, "handleInbound failed"));
+    svc.defer(
+      handleInbound(svc, {
+        client,
+        channel: sms.channel,
+        phone,
+        text: sms.body || "(empty message)",
+        externalId: sms.messageSid,
+        source: sms.channel.toLowerCase(),
+      }).catch((err) => req.log.error(err, "handleInbound failed")),
+    );
   });
 };

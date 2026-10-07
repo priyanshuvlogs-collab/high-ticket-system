@@ -250,7 +250,7 @@ function buildStore(svc: Services, client: Client, lead: Lead, conversation: Con
 
       // Score asynchronously; don't hold up the SMS reply.
       if (svc.env.ANTHROPIC_API_KEY) {
-        void (async () => {
+        svc.defer((async () => {
           try {
             const history = await loadHistory(conversation.id, false);
             const score = await scoreLead({ config: parseClientConfig(client.config), history, model: svc.env.AGENT_MODEL });
@@ -264,7 +264,7 @@ function buildStore(svc: Services, client: Client, lead: Lead, conversation: Con
           } catch (err) {
             console.error("[score] failed", err);
           }
-        })();
+        })());
       }
     },
   };
