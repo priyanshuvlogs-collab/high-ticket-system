@@ -38,12 +38,35 @@ Open http://localhost:3000, submit the form as a lead, chat. Open http://localho
 
 No database handy? Run the agent in the terminal: `pnpm demo:chat` (needs only `ANTHROPIC_API_KEY`).
 
-### SMS / WhatsApp demo number
+### SMS demo number (US)
 
-1. Buy a Twilio number. Set its "A message comes in" webhook to `https://<API_PUBLIC_URL>/webhooks/twilio` (use ngrok in dev and put that URL in `API_PUBLIC_URL`).
-2. Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` in `.env`.
-3. `DEMO_TWILIO_NUMBER=+1555... DEMO_OWNER_PHONE=+1555... pnpm seed:demo` to attach the number (and handoff alerts) to the demo client.
-4. Text the number. Watch the dashboard.
+```bash
+ngrok http 4000                                   # dev only; copy the https URL into API_PUBLIC_URL in .env
+pnpm twilio:setup --dry-run                       # see 5 available toll-free numbers, buy nothing
+pnpm twilio:setup                                 # pick one -> buys it, sets its webhook, attaches it to demo-coach
+pnpm twilio:setup --type local --area 305         # local number instead of toll-free
+pnpm twilio:setup --attach +18885551234           # re-sync webhook on a number you already own (after ngrok URL changes)
+```
+
+Needs `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `API_PUBLIC_URL` in `.env` and an **upgraded (paid) Twilio account**. Add `DEMO_OWNER_PHONE=+1...` to `.env` and re-run `pnpm seed:demo` to receive handoff alerts by text.
+
+**US SMS does not deliver until the number is registered.** Twilio enforces this.
+
+| | Toll-free (use this for the demo) | Local (10DLC) |
+|---|---|---|
+| Registration | Toll-Free Verification: free, one form | A2P brand ($4) + campaign (~$15 + monthly), EIN required |
+| Typical wait | 1-5 business days | Days to weeks |
+| Until approved | Outbound SMS blocked | Filtered / blocked |
+
+Submit verification right after buying: Twilio Console → Phone Numbers → Regulatory Compliance → Toll-Free Verification. Suggested answers:
+
+- Business: Hustle Buddies (your website / social link). Use case: *Appointment scheduling and lead follow-up*.
+- Opt-in: *Lead submits a web form with their phone number and ticks "Text me about my call" consent.* Attach a screenshot of the demo form at `/`.
+- Monthly volume: 1,000. Sample messages:
+  - "Hi Sam, this is Alex with Scale Studio Coaching. You asked about a Strategy Call. Quick one: what do you sell right now, and roughly what's it bringing in per month? Reply STOP to opt out."
+  - "You're booked for Thu Oct 9, 3:00 PM ET. Calendar invite is on its way. Reply if anything changes."
+
+While you wait, demo on the web chat at `/`. STOP/HELP replies are handled by Twilio automatically on toll-free and 10DLC numbers; the agent also closes the conversation on "stop".
 
 ### Google Calendar (real bookings)
 

@@ -21,10 +21,17 @@
     "db:push": "pnpm --filter @bookedai/db push",
     "db:migrate": "pnpm --filter @bookedai/db migrate",
     "seed:demo": "tsx scripts/seed-demo-client.ts",
-    "demo:chat": "tsx scripts/demo-chat.ts"
+    "demo:chat": "tsx scripts/demo-chat.ts",
+    "twilio:setup": "tsx scripts/twilio-setup.ts"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "sharp"
+    ]
   },
   "devDependencies": {
     "@bookedai/agent": "workspace:*",
@@ -33,6 +40,7 @@
     "@types/node": "^22.0.0",
     "dotenv": "^16.4.5",
     "tsx": "^4.19.0",
+    "twilio": "^5.10.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.0"
   }

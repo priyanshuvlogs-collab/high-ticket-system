@@ -13,6 +13,7 @@ export function DemoChat() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [consent, setConsent] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
@@ -70,9 +71,15 @@ export function DemoChat() {
         <input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+1 555 000 1111" />
         <label>Email (optional, for the calendar invite)</label>
         <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="sam@example.com" />
+        <label style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 10 }}>
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} required style={{ width: "auto", marginTop: 4 }} />
+          <span>
+            Text me about my call. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help.
+          </span>
+        </label>
         <label>What do you want help with?</label>
         <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="I run a fitness coaching business at ~$6k/mo and want to get to $15k." />
-        <button type="submit" disabled={busy || Boolean(conversationId)}>
+        <button type="submit" disabled={busy || !consent || Boolean(conversationId)}>
           {conversationId ? "Submitted" : busy ? "Sending..." : "Get my call booked"}
         </button>
         {error && <div className="error">{error}</div>}
