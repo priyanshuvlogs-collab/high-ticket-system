@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import formbody from "@fastify/formbody";
+import rateLimit from "@fastify/rate-limit";
 import { loadEnv } from "./env.js";
 import { buildServices } from "./services.js";
 import { setLocalJobHandler } from "./jobs.js";
@@ -19,6 +20,8 @@ const app = Fastify({ logger: env.NODE_ENV !== "test" });
 const origins = env.WEB_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean);
 await app.register(cors, { origin: origins, credentials: true });
 await app.register(formbody);
+// Global ceiling; the public lead endpoints get a tighter per-route limit below.
+await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute" });
 
 app.get("/health", async () => ({ ok: true, model: env.AGENT_MODEL, jobs: env.REDIS_URL ? "bullmq" : "in-process" }));
 

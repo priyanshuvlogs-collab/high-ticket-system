@@ -31,7 +31,10 @@ function normalizePhone(p: string): string {
  * Creates the lead and has the agent send the opening SMS within seconds.
  */
 export const leadRoutes: FastifyPluginAsync<{ svc: Services }> = async (app, { svc }) => {
-  app.post("/leads", async (req, reply) => {
+  // Each lead costs a Claude call; keep bots from burning budget. 10/min per IP is plenty for real forms.
+  const publicLimit = { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } };
+
+  app.post("/leads", publicLimit, async (req, reply) => {
     const parsed = WebLeadSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
     const body = parsed.data;
@@ -65,7 +68,7 @@ export const leadRoutes: FastifyPluginAsync<{ svc: Services }> = async (app, { s
    * POST /conversations/:id/messages - web-chat channel (no Twilio). Lets the demo page
    * keep chatting in the browser after the form submit.
    */
-  app.post<{ Params: { id: string }; Body: { text: string } }>("/conversations/:id/messages", async (req, reply) => {
+  app.post<{ Params: { id: string }; Body: { text: string } }>("/conversations/:id/messages", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
     if (!text) return reply.code(400).send({ error: "text required" });
     const convo = await prisma.conversation.findUnique({

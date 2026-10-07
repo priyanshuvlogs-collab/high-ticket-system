@@ -129,6 +129,10 @@ pnpm typecheck
 
 Tests run against a scripted fake of the Claude API, so they're free and deterministic. For a live smoke test use `pnpm demo:chat`.
 
+## Selling it
+
+The DM scripts, live demo flow, objections, trial close, and client onboarding checklist are in [docs/sales-playbook.md](docs/sales-playbook.md).
+
 ## Roadmap
 
 - **Phase 2 (after first paying trial):** Stripe ($1k/mo w/ 30-day trial, $5k setup), onboarding wizard, nightly report email, eval set of 20 scripted leads.

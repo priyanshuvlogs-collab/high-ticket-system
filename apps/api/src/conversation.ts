@@ -9,6 +9,7 @@ import { prisma, type Channel, type Client, type Conversation, type Lead } from 
 import { pushToGhl, formatInTz } from "@bookedai/integrations";
 import type { Services } from "./services.js";
 import { scheduleBookingJobs } from "./jobs.js";
+import { withLock } from "./lock.js";
 
 /**
  * Orchestrates one inbound event: find/create lead + conversation, run the agent,
@@ -40,6 +41,11 @@ export interface InboundResult {
 
 export async function handleInbound(svc: Services, ev: InboundEvent): Promise<InboundResult> {
   const lead = await upsertLead(ev);
+  // Serialize turns per lead so rapid-fire texts don't race on the conversation history.
+  return withLock(`lead:${lead.id}`, () => runInbound(svc, ev, lead));
+}
+
+async function runInbound(svc: Services, ev: InboundEvent, lead: Lead): Promise<InboundResult> {
   let conversation = await prisma.conversation.findFirst({
     where: { leadId: lead.id, status: { in: ["ACTIVE", "HUMAN_TAKEOVER"] } },
     orderBy: { createdAt: "desc" },
