@@ -11,3 +11,4 @@ packages/db/src/generated/
 next-env.d.ts
 .vercel/
 apps/api/.vercel/
+apps/api/api/

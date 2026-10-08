@@ -4,9 +4,9 @@
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { waitUntil } from "@vercel/functions";
-import { loadEnv } from "../src/env.js";
-import { buildServices } from "../src/services.js";
-import { buildApp } from "../src/app.js";
+import { loadEnv } from "./env.js";
+import { buildServices } from "./services.js";
+import { buildApp } from "./app.js";
 
 const appPromise = buildApp(buildServices(loadEnv(), { defer: (work) => waitUntil(work) }));
 

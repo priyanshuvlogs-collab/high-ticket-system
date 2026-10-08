@@ -1,4 +1,5 @@
-import { google, type calendar_v3 } from "googleapis";
+import { calendar, type calendar_v3 } from "@googleapis/calendar";
+import { OAuth2Client } from "google-auth-library";
 import {
   generateSlots,
   type AvailabilityQuery,
@@ -37,7 +38,7 @@ export const GOOGLE_CALENDAR_SCOPES = [
 
 /** URL to send the client owner to so they can connect their calendar. `state` carries the client id. */
 export function googleAuthUrl(cfg: GoogleOAuthConfig, state: string): string {
-  const oauth2 = new google.auth.OAuth2(cfg.clientId, cfg.clientSecret, cfg.redirectUri);
+  const oauth2 = new OAuth2Client(cfg.clientId, cfg.clientSecret, cfg.redirectUri);
   return oauth2.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
@@ -51,7 +52,7 @@ export async function exchangeGoogleCode(
   cfg: GoogleOAuthConfig,
   code: string,
 ): Promise<GoogleCalendarCredentials> {
-  const oauth2 = new google.auth.OAuth2(cfg.clientId, cfg.clientSecret, cfg.redirectUri);
+  const oauth2 = new OAuth2Client(cfg.clientId, cfg.clientSecret, cfg.redirectUri);
   const { tokens } = await oauth2.getToken(code);
   if (!tokens.refresh_token) {
     throw new Error("Google did not return a refresh_token; re-run consent with prompt=consent");
@@ -70,13 +71,13 @@ export class GoogleCalendar implements CalendarProvider {
   private readonly calendarId: string;
 
   constructor(cfg: GoogleOAuthConfig, creds: GoogleCalendarCredentials) {
-    const oauth2 = new google.auth.OAuth2(cfg.clientId, cfg.clientSecret, cfg.redirectUri);
+    const oauth2 = new OAuth2Client(cfg.clientId, cfg.clientSecret, cfg.redirectUri);
     oauth2.setCredentials({
       access_token: creds.access_token,
       refresh_token: creds.refresh_token,
       expiry_date: creds.expiry_date,
     });
-    this.api = google.calendar({ version: "v3", auth: oauth2 });
+    this.api = calendar({ version: "v3", auth: oauth2 });
     this.calendarId = creds.calendarId ?? "primary";
   }
 

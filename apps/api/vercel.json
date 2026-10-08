@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile --filter @bookedai/api...",
-  "buildCommand": "cd ../.. && pnpm db:generate",
+  "buildCommand": "cd ../.. && pnpm db:generate && pnpm --filter @bookedai/api build:vercel",
   "framework": null,
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "maxDuration": 120,
       "memory": 1024
     }

@@ -62,6 +62,9 @@ importers:
       '@fastify/rate-limit':
         specifier: ^11.2.0
         version: 11.2.0
+      '@prisma/client':
+        specifier: ^6.19.3
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       '@vercel/functions':
         specifier: ^3.9.0
         version: 3.9.11
@@ -78,6 +81,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.5
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.2
       tsx:
         specifier: ^4.19.0
         version: 4.23.15
@@ -147,9 +153,12 @@ importers:
 
   packages/integrations:
     dependencies:
-      googleapis:
-        specifier: ^184.0.0
-        version: 184.0.0
+      '@googleapis/calendar':
+        specifier: ^20.1.0
+        version: 20.1.0
+      google-auth-library:
+        specifier: ^11.2.0
+        version: 11.2.0
       twilio:
         specifier: ^5.10.0
         version: 5.13.1
@@ -358,6 +367,10 @@ packages:
 
   '@fastify/rate-limit@11.2.0':
     resolution: {integrity: sha512-X7osJd4XSvMoejYrnJkSZYYjY1eNYoBqhjlzf1RakC2204qExFqZFTKj5+T7VuzA/iUI9Z3UoSqQRkB2HpG0oQ==}
+
+  '@googleapis/calendar@20.1.0':
+    resolution: {integrity: sha512-bPO9wts48OAEhJn5UfgPC4FuyW/D6ufUzdXx0JHfeJIqg+O5bHvX/TenaAdbJuGhluhn5FLlyl6HzuhE4rFJqw==}
+    engines: {node: '>=22.0.0'}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -1186,8 +1199,8 @@ packages:
     resolution: {integrity: sha512-L5bGsVkxJbJgdnwyuheIunkGatUF/zssUoxxjACCseZYAVbaqdh9Tsmmlkl8vYan09H7sbvKt4pS8GqKLBrEzA==}
     hasBin: true
 
-  google-auth-library@11.1.0:
-    resolution: {integrity: sha512-YIBq5KNoHQrZ9PM4PeodDBqqBGlSTIxh1zibN8u3zNIO9UJg8gvKuCpdKV7fWXhsZ2zRkU6FhGrgKNgLJ2IRgw==}
+  google-auth-library@11.2.0:
+    resolution: {integrity: sha512-R9/Dwc3swSur04RnizQ6EBUmmcno2cC5cAKtrG/C+pY+W7c5l6rSnFWgMkR7NSYj1n6XWmb/KhcjxGslWm4yIA==}
     engines: {node: '>=22'}
 
   google-logging-utils@2.0.1:
@@ -1197,10 +1210,6 @@ packages:
   googleapis-common@9.1.0:
     resolution: {integrity: sha512-UJBElspYPJb0+fI8q0LxARw1hPnwd9yd5NqhKqEUPxjhnB1jdsRP7rlRTBp69JS5Vo10bCiRE9+ISsIG2A+Ttg==}
     engines: {node: '>=22'}
-
-  googleapis@184.0.0:
-    resolution: {integrity: sha512-idQwo/hxlV32JyCZpApc/w8dz9pQLQhk/x370VfReimW4TzMqvcVE6DP13Vn1SnW7BEJcnJ7TLaWbWv91mhz2w==}
-    engines: {node: '>=22.0.0'}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -1947,6 +1956,12 @@ snapshots:
       ip-address: 10.7.3
       toad-cache: 3.7.4
 
+  '@googleapis/calendar@20.1.0':
+    dependencies:
+      googleapis-common: 9.1.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@img/colour@1.1.0':
     optional: true
 
@@ -2689,7 +2704,7 @@ snapshots:
       nypm: 0.6.10
       pathe: 2.0.3
 
-  google-auth-library@11.1.0:
+  google-auth-library@11.2.0:
     dependencies:
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
@@ -2706,17 +2721,10 @@ snapshots:
     dependencies:
       extend: 3.0.2
       gaxios: 7.3.1
-      google-auth-library: 11.1.0
+      google-auth-library: 11.2.0
       google-logging-utils: 2.0.1
       qs: 6.16.0
       url-template: 2.0.8
-    transitivePeerDependencies:
-      - supports-color
-
-  googleapis@184.0.0:
-    dependencies:
-      google-auth-library: 11.1.0
-      googleapis-common: 9.1.0
     transitivePeerDependencies:
       - supports-color
 

@@ -8,7 +8,8 @@
     "start": "tsx src/server.ts",
     "worker": "tsx watch --env-file=../../.env src/worker.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "build:vercel": "esbuild src/vercel.ts --bundle --platform=node --format=esm --target=node22 --outfile=api/index.js --external:@prisma/client --external:bullmq --external:twilio --banner:js=\"import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);\" --log-level=warning"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -18,6 +19,7 @@
     "@fastify/cors": "^11.3.0",
     "@fastify/formbody": "^9.0.0",
     "@fastify/rate-limit": "^11.2.0",
+    "@prisma/client": "^6.19.3",
     "@vercel/functions": "^3.9.0",
     "bullmq": "^5.60.0",
     "fastify": "^5.6.0",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.0",
     "tsx": "^4.19.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.0"
