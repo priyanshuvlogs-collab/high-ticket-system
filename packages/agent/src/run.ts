@@ -87,6 +87,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
 
   const toolCalls: ToolCallRecord[] = [];
   const replyParts: string[] = [];
+  let interimFallback = "";
   const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   let stopReason: Anthropic.Messages.Message["stop_reason"] = null;
 
@@ -117,14 +118,25 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
       break;
     }
 
-    for (const block of res.content) {
-      if (block.type === "text" && block.text.trim()) replyParts.push(block.text.trim());
-    }
-
     const toolUses = res.content.filter(
       (b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use",
     );
-    if (res.stop_reason !== "tool_use" || toolUses.length === 0) break;
+    const isFinal = res.stop_reason !== "tool_use" || toolUses.length === 0;
+    const texts = res.content
+      .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
+      .map((b) => b.text.trim())
+      .filter(Boolean);
+
+    // Only the final assistant message is the reply the lead sees. Text emitted alongside tool
+    // calls is the model's working note ("checking the calendar...") and must not reach the SMS.
+    if (isFinal) {
+      replyParts.length = 0;
+      replyParts.push(...texts);
+    } else if (texts.length && replyParts.length === 0) {
+      // Keep the latest interim text only as a fallback if the loop ends without a final message.
+      interimFallback = texts.join("\n\n");
+    }
+    if (isFinal) break;
 
     // Execute all tool calls, return all results in ONE user message.
     const results: Anthropic.Messages.ToolResultBlockParam[] = [];
@@ -156,7 +168,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
   }
 
   return {
-    reply: replyParts.join("\n\n"),
+    reply: replyParts.length ? replyParts.join("\n\n") : interimFallback,
     appended,
     toolCalls,
     stopReason,

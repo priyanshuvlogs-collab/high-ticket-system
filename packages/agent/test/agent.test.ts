@@ -118,6 +118,22 @@ describe("off-script lead is handed to a human", () => {
   });
 });
 
+describe("reply composition", () => {
+  it("sends only the final message's text, never the working notes emitted with tool calls", async () => {
+    const t = await runTurn({
+      deps: makeDeps(),
+      lead,
+      history: [],
+      inbound: "any afternoon works",
+      create: scriptedCreator([
+        { text: "Checking the calendar...", tools: [{ name: "get_availability", input: {} }] },
+        { text: "Thu 3pm or Fri 11am?" },
+      ]),
+    });
+    expect(t.reply).toBe("Thu 3pm or Fri 11am?");
+  });
+});
+
 describe("guardrails", () => {
   it("rejects book_slot for a start time not returned by get_availability", async () => {
     const store = new MemoryStore();

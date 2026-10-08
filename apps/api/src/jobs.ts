@@ -56,8 +56,9 @@ export async function scheduleBookingJobs(svc: Services, bookingId: string, star
   const t24 = devFast ? new Date(Date.now() + 20_000) : new Date(startsAt.getTime() - 24 * h);
   const t1 = devFast ? new Date(Date.now() + 40_000) : new Date(startsAt.getTime() - 1 * h);
   const tNoShow = devFast ? new Date(Date.now() + 60_000) : new Date(startsAt.getTime() + 30 * 60_000);
-  await schedule(svc, "reminder_24h", { bookingId }, t24);
-  await schedule(svc, "reminder_1h", { bookingId }, t1);
+  // A reminder whose time has already passed (same-day booking) is skipped, not fired immediately.
+  if (t24.getTime() > Date.now()) await schedule(svc, "reminder_24h", { bookingId }, t24);
+  if (t1.getTime() > Date.now()) await schedule(svc, "reminder_1h", { bookingId }, t1);
   await schedule(svc, "no_show_check", { bookingId }, tNoShow);
 }
 
