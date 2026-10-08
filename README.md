@@ -38,7 +38,26 @@ Open http://localhost:3000, submit the form as a lead, chat. Open http://localho
 
 No database handy? Run the agent in the terminal: `pnpm demo:chat` (needs only `ANTHROPIC_API_KEY`).
 
-## Deploy (Railway for the API, Vercel for the web app)
+## Deploy
+
+**Live infrastructure (set up 2026-10-08):**
+
+| Piece | Where | URL / id |
+|---|---|---|
+| API (Fastify on Vercel functions) | Vercel project `bookedai-api`, root `apps/api` | https://hustlebuddies-bookedai-api.vercel.app |
+| Web (Next.js) | Vercel project `bookedai-web`, root `apps/web` | https://hustlebuddies-bookedai.vercel.app |
+| Postgres | Supabase project `bookedai` (ca-central-1), ref `kogftansnijtsilsggbq` | schema applied, demo client seeded with +1 289-819-2433 |
+
+Both Vercel projects auto-deploy on every push to `claude/ai-agent-booking-system-vonbnw`. The API runs as one serverless function (`apps/api/api/index.ts`); background work after the Twilio ACK is kept alive with `waitUntil`.
+
+**Secrets you must paste yourself** (Vercel → `bookedai-api` → Settings → Environment Variables → edit): `ANTHROPIC_API_KEY`, `TWILIO_AUTH_TOKEN`. Everything else is already set. Redeploy after editing (Deployments → ⋯ → Redeploy).
+
+**Twilio webhook:** Phone Numbers → +1 289 819 2433 → Messaging → "A message comes in" = `https://hustlebuddies-bookedai-api.vercel.app/webhooks/twilio`, POST.
+
+**Known limits on serverless:** reminder / no-show timers do not persist between invocations. Add Redis + a worker (or Vercel Cron) before the first paying client. The Railway path below still works if you prefer a long-lived server.
+
+<details>
+<summary>Alternative: Railway (long-lived server, timers work)</summary>
 
 The demo number must reach the API 24/7, so deploy before wiring it. About 10 minutes.
 
@@ -67,6 +86,8 @@ The demo number must reach the API 24/7, so deploy before wiring it. About 10 mi
 Running costs: Railway hobby ~$5/mo plus Postgres usage; Claude Opus 5.5 roughly $0.05–0.15 per complete lead conversation with caching; Twilio about $0.008 per Canadian SMS segment, more for cross-border.
 
 Reminders and no-show follow-ups run on in-process timers on Railway (they reset on redeploy). Add a Railway Redis, set `REDIS_URL`, and run a second service with start command `pnpm dev:worker` when the first paying client goes live.
+
+</details>
 
 ### SMS demo number
 
