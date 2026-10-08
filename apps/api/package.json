@@ -9,7 +9,7 @@
     "worker": "tsx watch --env-file=../../.env src/worker.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
-    "build:vercel": "esbuild src/vercel.ts --bundle --platform=node --format=esm --target=node22 --outfile=api/index.js --external:@prisma/client --external:bullmq --external:twilio --banner:js=\"import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);\" --log-level=warning"
+    "build:vercel": "esbuild src/vercel.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist/vercel.js --external:@prisma/client --external:bullmq --external:twilio --banner:js=\"import { createRequire as __cr } from 'node:module'; const require = __cr(import.meta.url);\" --log-level=warning"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
