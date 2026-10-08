@@ -80,5 +80,26 @@ export function parseInboundSms(body: Record<string, string>): InboundSms | null
   };
 }
 
+/**
+ * Point a number's inbound-SMS webhook at `smsUrl`. Used by the admin API and the setup script.
+ * Returns the number SID and the URL Twilio now has on file.
+ */
+export async function attachSmsWebhook(
+  cfg: TwilioConfig,
+  phoneNumber: string,
+  smsUrl: string,
+  friendlyName?: string,
+): Promise<{ numberSid: string; phoneNumber: string; smsUrl: string }> {
+  const client = twilio(cfg.accountSid, cfg.authToken);
+  const [existing] = await client.incomingPhoneNumbers.list({ phoneNumber, limit: 1 });
+  if (!existing) throw new Error(`${phoneNumber} is not on Twilio account ${cfg.accountSid}`);
+  const updated = await client.incomingPhoneNumbers(existing.sid).update({
+    smsUrl,
+    smsMethod: "POST",
+    ...(friendlyName ? { friendlyName } : {}),
+  });
+  return { numberSid: updated.sid, phoneNumber: updated.phoneNumber, smsUrl: updated.smsUrl };
+}
+
 /** TwiML empty response: we reply asynchronously via the REST API, not inline. */
 export const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';

@@ -4,6 +4,7 @@ import { prisma } from "@bookedai/db";
 import { ClientConfigSchema } from "@bookedai/agent";
 import type { Services } from "../services.js";
 import { cancelBookingJobs } from "../jobs.js";
+import { attachSmsWebhook } from "@bookedai/integrations";
 
 /**
  * Dashboard / admin API. Phase 1 auth = shared ADMIN_TOKEN bearer. Phase 2 swaps in per-client logins.
@@ -47,6 +48,22 @@ export const adminRoutes: FastifyPluginAsync<{ svc: Services }> = async (app, { 
         update: { ...d, config: d.config },
       });
       return client;
+    });
+
+    /** Point the client's Twilio number at this API's inbound webhook. */
+    r.post<{ Body: { clientSlug?: string } }>("/admin/twilio/attach", async (req, reply) => {
+      const { env } = svc;
+      if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) return reply.code(400).send({ error: "Twilio not configured" });
+      const slug = req.body?.clientSlug ?? "demo-coach";
+      const client = await prisma.client.findUnique({ where: { slug } });
+      if (!client?.twilioNumber) return reply.code(404).send({ error: `No client/number for slug ${slug}` });
+      const result = await attachSmsWebhook(
+        { accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN },
+        client.twilioNumber,
+        `${env.API_PUBLIC_URL}/webhooks/twilio`,
+        `BookedAI ${slug}`,
+      );
+      return result;
     });
 
     r.get<{ Querystring: { clientSlug?: string } }>("/admin/overview", async (req) => {
