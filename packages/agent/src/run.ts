@@ -58,13 +58,16 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
   const byName = new Map<string, AgentTool<any>>(tools.map((t) => [t.name, t]));
   const apiTools = toApiTools(tools);
 
+  // The top-level system prompt must be byte-identical across every turn of a conversation:
+  // Claude Opus 5.5 binds thinking blocks to the prefix they were produced with, and a changed
+  // system prompt invalidates replayed history. Per-turn lead context goes into `messages` as a
+  // system-role message instead (append-only, cache-friendly).
   const system: Anthropic.Messages.TextBlockParam[] = [
     {
       type: "text",
       text: buildStableSystemPrompt(deps.config),
       cache_control: { type: "ephemeral" },
     },
-    { type: "text", text: buildVolatileContext(lead) },
   ];
 
   const messages: StoredMessage[] = [...input.history];
@@ -80,6 +83,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
       input.inbound ??
       "[system: the lead just submitted the web form. Send your opening message now.]",
   });
+  push({ role: "system", content: buildVolatileContext(lead) });
 
   const toolCalls: ToolCallRecord[] = [];
   const replyParts: string[] = [];

@@ -104,7 +104,7 @@ async function runInbound(svc: Services, ev: InboundEvent, lead: Lead): Promise<
     await prisma.message.create({
       data: {
         conversationId: conversation.id,
-        role: m.role === "assistant" ? "ASSISTANT" : "USER",
+        role: m.role === "assistant" ? "ASSISTANT" : m.role === "system" ? "SYSTEM" : "USER",
         content: m.content as object,
         text: isFinalAssistant ? result.reply : null,
       },
@@ -162,11 +162,11 @@ async function upsertLead(ev: InboundEvent): Promise<Lead> {
 /** Rebuild the API message history from stored turns. */
 export async function loadHistory(conversationId: string, dropLastUser: boolean): Promise<StoredMessage[]> {
   const rows = await prisma.message.findMany({
-    where: { conversationId, role: { in: ["USER", "ASSISTANT"] } },
+    where: { conversationId },
     orderBy: { createdAt: "asc" },
   });
   const msgs: StoredMessage[] = rows.map((r) => ({
-    role: r.role === "ASSISTANT" ? "assistant" : "user",
+    role: r.role === "ASSISTANT" ? "assistant" : r.role === "SYSTEM" ? "system" : "user",
     content: r.content as StoredMessage["content"],
   }));
   // The inbound we just stored will be re-added by runTurn.

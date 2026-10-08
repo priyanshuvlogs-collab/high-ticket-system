@@ -62,8 +62,8 @@ describe("qualified lead gets booked", () => {
     expect(store.ended[0]?.outcome).toBe("booked");
     expect(t2.reply).toContain("booked");
     // Parallel tool results are returned in ONE user message.
-    // appended = [inbound user, assistant(tool_use x2), user(tool_result x2), ...]
-    const resultMsg = t2.appended[2];
+    // appended = [inbound user, system(lead context), assistant(tool_use x2), user(tool_result x2), ...]
+    const resultMsg = t2.appended[3];
     expect(resultMsg?.role).toBe("user");
     expect(Array.isArray(resultMsg?.content) && resultMsg.content.length).toBe(2);
     // Booking landed on the calendar, in working hours, after min notice.
@@ -147,7 +147,7 @@ describe("guardrails", () => {
         { text: "ok" },
       ]),
     });
-    const res = t.appended[2];
+    const res = t.appended[3];
     expect(res && typeof res.content !== "string" && res.content[0]?.type === "tool_result" && res.content[0].is_error).toBe(true);
   });
 
@@ -165,6 +165,22 @@ describe("prompt + tools", () => {
     expect(p).toContain("$4,500");
     expect(p).toContain("[budget]");
     expect(p).toContain("Never invent prices");
+  });
+
+  it("keeps the top-level system prompt identical across turns and sends lead context as a system message", async () => {
+    const deps = makeDeps();
+    const c1 = scriptedCreator([{ text: "hi" }]);
+    const t1 = await runTurn({ deps, lead, history: [], inbound: null, create: c1 });
+    const c2 = scriptedCreator([{ text: "ok" }]);
+    await runTurn({ deps, lead: { ...lead, nowLocal: "Wed Oct 7, 9:00 AM", knownAnswers: { budget: "yes" } }, history: t1.appended, inbound: "hello", create: c2 });
+    expect(JSON.stringify(c1.calls[0]!.system)).toBe(JSON.stringify(c2.calls[0]!.system));
+    const sys = c2.calls[0]!.messages.filter((m) => m.role === "system");
+    expect(sys).toHaveLength(2);
+    expect(String(sys[1]!.content)).toContain("budget: yes");
+    // system context sits right after the user turn it describes
+    const msgs = c2.calls[0]!.messages;
+    const lastSys = msgs.map((m) => m.role).lastIndexOf("system");
+    expect(msgs[lastSys - 1]!.role).toBe("user");
   });
 
   it("puts a cache breakpoint on the stable block and exposes strict tool schemas", async () => {

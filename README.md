@@ -46,13 +46,19 @@ No database handy? Run the agent in the terminal: `pnpm demo:chat` (needs only `
 |---|---|---|
 | API (Fastify on Vercel functions) | Vercel project `bookedai-api`, root `apps/api` | https://hustlebuddies-bookedai-api.vercel.app |
 | Web (Next.js) | Vercel project `bookedai-web`, root `apps/web` | https://hustlebuddies-bookedai.vercel.app |
-| Postgres | Supabase project `bookedai` (ca-central-1), ref `kogftansnijtsilsggbq` | schema applied, demo client seeded with +1 289-819-2433 |
+| Postgres | Supabase project `bookedai` (ca-central-1), ref `kogftansnijtsilsggbq` | schema applied, demo client seeded with +1 417-804-3357 |
 
 Both Vercel projects auto-deploy on every push to `claude/ai-agent-booking-system-vonbnw`. The API runs as one serverless function (`apps/api/api/index.ts`); background work after the Twilio ACK is kept alive with `waitUntil`.
 
 **Secrets you must paste yourself** (Vercel → `bookedai-api` → Settings → Environment Variables → edit): `ANTHROPIC_API_KEY`, `TWILIO_AUTH_TOKEN`. Everything else is already set. Redeploy after editing (Deployments → ⋯ → Redeploy).
 
-**Twilio webhook:** Phone Numbers → +1 289 819 2433 → Messaging → "A message comes in" = `https://hustlebuddies-bookedai-api.vercel.app/webhooks/twilio`, POST.
+**Twilio webhook:** already set on +1 417-804-3357 (account ACcf4b…). To re-point it (or attach another client's number) without touching the console:
+
+```bash
+curl -X POST https://hustlebuddies-bookedai-api.vercel.app/admin/twilio/attach -H "Authorization: Bearer $ADMIN_TOKEN" -H "content-type: application/json" -d '{"clientSlug":"demo-coach"}'
+```
+
+The demo number is a US local number: it receives texts and can reply to Canadian phones, but replies to US phones stay blocked until A2P 10DLC is approved (answers in docs/sales-playbook.md). The 289 number mentioned earlier is not on this Twilio account.
 
 **Known limits on serverless:** reminder / no-show timers do not persist between invocations. Add Redis + a worker (or Vercel Cron) before the first paying client. The Railway path below still works if you prefer a long-lived server.
 
@@ -91,7 +97,7 @@ Reminders and no-show follow-ups run on in-process timers on Railway (they reset
 
 ### SMS demo number
 
-**Current demo number: +1 289-819-2433 (Ontario, Canada).** Canadian local numbers need no 10DLC or toll-free verification, so it texts immediately. Texts into US phones are cross-border and get more carrier filtering; fine for demos, get a US toll-free number for the first US client (steps below).
+**Current demo number: +1 417-804-3357 (US local, Twilio account ACcf4b…).** Inbound works today. Outbound to US phones needs A2P 10DLC approval; outbound to Canadian phones works now. For a registration-free demo number, buy a Canadian local number on this account with `pnpm twilio:setup` and re-seed.
 
 
 ```bash
